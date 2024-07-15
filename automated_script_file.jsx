@@ -18,7 +18,7 @@ var ELEMENT_PLACEMENT = {
 };
 
 var TEXT_CANVAS = [466, 173];
-var IMAGE_CANVAS = [507, 173];
+var IMAGE_CANVAS = [576, 215];
 
 app.preferences.rulerUnits = Units.PIXELS;
 
