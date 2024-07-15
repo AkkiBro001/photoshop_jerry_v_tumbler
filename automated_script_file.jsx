@@ -14,8 +14,11 @@ var ELEMENT_PLACEMENT = {
   PLACEBEFORE: "PLACEBEFORE",
   PLACEATBEGINNING: "PLACEATBEGINNING",
   PLACEATEND: "PLACEATEND",
-  INSIDE: "INSIDE"
+  INSIDE: "INSIDE",
 };
+
+var TEXT_CANVAS = [466, 173];
+var IMAGE_CANVAS = [507, 173];
 
 app.preferences.rulerUnits = Units.PIXELS;
 
@@ -206,106 +209,165 @@ function setSolidColor(doc, rgbColor, targetLayer) {
   interactiveSetColorFill(rgbColor);
 }
 
-function selectAllLayers(){
-	
-  cTID = function(s) { return cTID[s] || (cTID[s] = app.charIDToTypeID(s)); };
-  sTID = function(s) { return app.stringIDToTypeID(s); }; 
-  
+function selectAllLayers() {
+  cTID = function (s) {
+    return cTID[s] || (cTID[s] = app.charIDToTypeID(s));
+  };
+  sTID = function (s) {
+    return app.stringIDToTypeID(s);
+  };
+
   var ref = new ActionReference();
-  ref.putEnumerated(cTID('Lyr '), cTID('Ordn'), cTID('Trgt'));
+  ref.putEnumerated(cTID("Lyr "), cTID("Ordn"), cTID("Trgt"));
   var desc = new ActionDescriptor();
-  desc.putReference(cTID('null'), ref);
-  executeAction(sTID('selectAllLayers'), desc, DialogModes.NO);
-  
-  }
+  desc.putReference(cTID("null"), ref);
+  executeAction(sTID("selectAllLayers"), desc, DialogModes.NO);
+}
 
-  function duplicateLayer (folder_name, file_name, resizeArray, targetDoc, documentDetails) {
-    var rootPath = documentDetails.docLocation.cleanPath;
-    app.open(new File(rootPath + "/" + folder_name + "/" + file_name))
-    var current_doc = app.activeDocument;
-    executeAction(stringIDToTypeID("newPlacedLayer"));
-    current_doc.resizeImage(resizeArray[0],UnitValue(resizeArray[1],"px"),resizeArray[2],ResampleMethod.BICUBIC);
-    current_doc.activeLayer.duplicate(targetDoc, ElementPlacement[ELEMENT_PLACEMENT.PLACEATBEGINNING])
-    current_doc.close(SaveOptions.DONOTSAVECHANGES)
-    
-  }
+function duplicateLayer(
+  folder_name,
+  file_name,
+  resizeArray,
+  targetDoc,
+  documentDetails
+) {
+  var rootPath = documentDetails.docLocation.cleanPath;
+  app.open(new File(rootPath + "/" + folder_name + "/" + file_name));
+  var current_doc = app.activeDocument;
+  executeAction(stringIDToTypeID("newPlacedLayer"));
+  current_doc.resizeImage(
+    resizeArray[0],
+    UnitValue(resizeArray[1], "px"),
+    resizeArray[2],
+    ResampleMethod.BICUBIC
+  );
+  current_doc.activeLayer.duplicate(
+    targetDoc,
+    ElementPlacement[ELEMENT_PLACEMENT.PLACEATBEGINNING]
+  );
+  current_doc.close(SaveOptions.DONOTSAVECHANGES);
+}
 
-  function transformText(activeDoc) {
-     // Ensure the layer is a text layer
-     var textLayer = activeDoc.activeLayer;
-     if (textLayer.kind == LayerKind.TEXT) {
-      // Set the reference point to the center of the text layer
-      activeDoc.activeLayer = textLayer;
-      var idsetd = charIDToTypeID( "setd" );
-      var desc100 = new ActionDescriptor();
-      var idnull = charIDToTypeID( "null" );
-      var ref1 = new ActionReference();
-      var idlayer = charIDToTypeID( "Lyr " );
-      ref1.putEnumerated( idlayer, charIDToTypeID( "Ordn" ), charIDToTypeID( "Trgt" ) );
-      desc100.putReference( idnull, ref1 );
-      var idT = charIDToTypeID( "T   " );
-      var desc101 = new ActionDescriptor();
-      var idOfst = charIDToTypeID( "Ofst" );
-      var desc102 = new ActionDescriptor();
-      desc102.putUnitDouble( charIDToTypeID( "Hrzn" ), charIDToTypeID( "#Pxl" ), 0 );
-      desc102.putUnitDouble( charIDToTypeID( "Vrtc" ), charIDToTypeID( "#Pxl" ), 0 );
-      var idPnt = charIDToTypeID( "Pnt " );
-      desc101.putObject( idOfst, idPnt, desc102 );
-      var idOfst = charIDToTypeID( "Ofst" );
-      desc100.putObject( idT, idOfst, desc101 );
-      executeAction( idsetd, desc100, DialogModes.NO );
+function align(method) {
+  var desc = new ActionDescriptor();
 
-      // Get the current bounds of the text layer
-      var bounds = textLayer.bounds;
-      var currentWidth = bounds[2].as("px") - bounds[0].as("px");
-      var currentHeight = bounds[3].as("px") - bounds[1].as("px");
+  var ref = new ActionReference();
 
-      // Define the new pixel dimensions
-      var newWidth = 500; // new width in pixels
-      var newHeight = 300; // new height in pixels
+  ref.putEnumerated(
+    charIDToTypeID("Lyr "),
+    charIDToTypeID("Ordn"),
+    charIDToTypeID("Trgt")
+  );
 
-      // Calculate the scale percentages
-      var widthScale = (newWidth / currentWidth) * 100;
-      var heightScale = (newHeight / currentHeight) * 100;
+  desc.putReference(charIDToTypeID("null"), ref);
 
-      // Transform the text layer: scale and rotate
-      var idTrnf = charIDToTypeID( "Trnf" );
-      var descTransform = new ActionDescriptor();
-      descTransform.putEnumerated( charIDToTypeID( "FTcs" ), charIDToTypeID( "QCSt" ), charIDToTypeID( "Qcsa" ) );
-      descTransform.putUnitDouble( charIDToTypeID( "Wdth" ), charIDToTypeID( "#Prc" ), widthScale ); // scale width
-      descTransform.putUnitDouble( charIDToTypeID( "Hght" ), charIDToTypeID( "#Prc" ), heightScale ); // scale height
-      //descTransform.putUnitDouble( charIDToTypeID( "Angl" ), charIDToTypeID( "#Ang" ), 45.000000 ); // rotate 45 degrees
+  desc.putEnumerated(
+    charIDToTypeID("Usng"),
+    charIDToTypeID("ADSt"),
+    charIDToTypeID(method)
+  );
 
-      executeAction( idTrnf, descTransform, DialogModes.NO );
+  try {
+    executeAction(charIDToTypeID("Algn"), desc, DialogModes.NO);
+  } catch (e) {}
+}
+
+function scaleToFit(activeDoc, canvas) {
+  // get the scale
+  var docWidth = activeDoc.width.value;
+  var docHeight = activeDoc.height.value;
+  var scale = Math.min(canvas[0] / docWidth, canvas[1] / docHeight);
+  activeDoc.resizeImage(
+    UnitValue(docWidth * scale, "px"),
+    null,
+    null,
+    ResampleMethod.BICUBIC
+  ); //For Width
+  activeDoc.resizeImage(
+    null,
+    UnitValue(docHeight * scale, "px"),
+    null,
+    ResampleMethod.BICUBIC
+  ); //For Height
+}
+
+function RevealAll(activeLayer, targetDoc) {
+  var lyrWidth = activeLayer.bounds[2] - activeLayer.bounds[0];
+  var lyrHeight = activeLayer.bounds[3] - activeLayer.bounds[1];
+
+  targetDoc.resizeCanvas(
+    UnitValue(lyrWidth, "px"),
+    null,
+    AnchorPosition.MIDDLELEFT
+  ); //For Width
+  targetDoc.resizeCanvas(
+    null,
+    UnitValue(lyrHeight, "px"),
+    AnchorPosition.MIDDLELEFT
+  ); //For Height
+}
+
+function set_background_image(doc, documentDetails, combination) {
+  var find_bg = findLayer(doc, "Background");
+  if (!find_bg) return alert("Background layerset is missing");
+  var Background_Group = doc.activeLayer;
+  if (Background_Group.typename !== "LayerSet")
+    return alert("Background should be a group layer");
+
+  if (
+    Background_Group.typename === "LayerSet" ||
+    Background_Group.layers.length === 1
+  ) {
+    duplicateLayer(
+      BACKGROUND_IMAGE_FOLDER,
+      combination.background,
+      [null, doc.height.value, null],
+      doc,
+      documentDetails
+    );
+    doc.activeLayer.move(
+      Background_Group,
+      ElementPlacement[ELEMENT_PLACEMENT.INSIDE]
+    );
+    doc.activeLayer.name = "Background";
   } else {
-      alert("The selected layer is not a text layer.");
+    return alert("Invaild layer Structure");
   }
+}
 
-  }
-
-
-  function set_background_image(doc, documentDetails, combination){
-    var find_bg = findLayer(doc, "Background")
-    if(!find_bg) return alert("Background layerset is missing")
-    var Background_Group = doc.activeLayer
-    if(Background_Group.typename !== 'LayerSet') return alert("Background should be a group layer") 
-    
-      if(Background_Group.typename === 'LayerSet'|| Background_Group.layers.length === 1) {
-          duplicateLayer(BACKGROUND_IMAGE_FOLDER, combination.background, [null, doc.height.value, null], doc, documentDetails)
-          doc.activeLayer.move(Background_Group, ElementPlacement[ELEMENT_PLACEMENT.INSIDE])
-          doc.activeLayer.name = "Background"
-      }else{
-         return alert("Invaild layer Structure")
-      }
-  }
-
-  function set_name(doc, documentDetails, combination){
-    var Bottle = findLayer(doc, "Bottle")
+function set_name(doc, documentDetails, combination) {
+  findLayer(doc, "Bottle");
+  
+  executeAction(stringIDToTypeID("placedLayerEditContents"));
+  var BottleDoc = app.activeDocument;
+  const findText = findLayer(BottleDoc, "Text");
+  if (findText) {
     executeAction(stringIDToTypeID("placedLayerEditContents"));
-    var BottleDoc = app.activeDocument;
-    BottleDoc.activeLayer = BottleDoc.layers[0]
-    transformText(BottleDoc)
+    var textDoc = app.activeDocument;
+    var textLayer = textDoc.activeLayer;
+    if (textLayer.kind === LayerKind.TEXT) {
+      textLayer.textItem.font = combination.font;
+      textLayer.textItem.contents = combination.name;
+      RevealAll(textDoc.activeLayer, textDoc);
+
+      textDoc.selection.selectAll();
+      align("AdCH");
+      align("AdCV");
+
+      scaleToFit(textDoc, TEXT_CANVAS);
+
+      textDoc.close(SaveOptions.SAVECHANGES);
+      app.activeDocument = BottleDoc
+
+      BottleDoc.selection.selectAll();
+      align("AdCH");
+      
+
+      BottleDoc.close(SaveOptions.SAVECHANGES);
+
+    }
   }
+}
 
 function main() {
   if (app.documents.length === 0) return;
@@ -313,10 +375,9 @@ function main() {
   var documentDetails = new info(doc);
   var rootPath = documentDetails.docLocation.cleanPath;
 
-   /******************************************/
-   /************ COLOR SETUP ******************/
-   /******************************************/
-
+  /******************************************/
+  /************ COLOR SETUP ******************/
+  /******************************************/
 
   //Color
   // var COLOR = prompt("Enter color hexcode value e.g '#ffff00'", "");
@@ -336,15 +397,18 @@ function main() {
   // executeAction(stringIDToTypeID("placedLayerEditContents"));
   // var BottleDoc = app.activeDocument;
   // var BottleColor = findLayer(BottleDoc, "Bottle Color")
-  // if(!BottleColor) return alert("BottleColor Layer is missing") 
+  // if(!BottleColor) return alert("BottleColor Layer is missing")
   // setSolidColor(BottleDoc, rgbColor, "Bottle Color");
   // BottleDoc.close(SaveOptions.SAVECHANGES);
 
-   /******************************************/
-   /************ IMAGES SETUP ****************/
+  /******************************************/
+  /************ IMAGES SETUP ****************/
   /******************************************/
 
-  var background_images = getFileNamesInFolder(rootPath, BACKGROUND_IMAGE_FOLDER);
+  var background_images = getFileNamesInFolder(
+    rootPath,
+    BACKGROUND_IMAGE_FOLDER
+  );
   var images = getFileNamesInFolder(rootPath, IMAGES_FOLDER);
 
   if (
@@ -354,21 +418,21 @@ function main() {
     images.length === 0
   )
     return alert("Data Missing");
-  
+
   /* Set Combination */
-  var combination = generateCombinations(background_images, FONT_NAME, NAMES, images)
+  var combination = generateCombinations(
+    background_images,
+    FONT_NAME,
+    NAMES,
+    images
+  );
   var cominationLength = combination.length;
 
-  var comb1 = combination[5]
-
+  var comb1 = combination[5];
 
   //set_background_image(doc, documentDetails, comb1)
 
-  set_name(doc, documentDetails, comb1)
-
-  
-
-
+  set_name(doc, documentDetails, comb1);
 }
 
 main();
