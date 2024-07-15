@@ -230,6 +230,59 @@ function selectAllLayers(){
     
   }
 
+  function transformText(activeDoc) {
+     // Ensure the layer is a text layer
+     var textLayer = activeDoc.activeLayer;
+     if (textLayer.kind == LayerKind.TEXT) {
+      // Set the reference point to the center of the text layer
+      activeDoc.activeLayer = textLayer;
+      var idsetd = charIDToTypeID( "setd" );
+      var desc100 = new ActionDescriptor();
+      var idnull = charIDToTypeID( "null" );
+      var ref1 = new ActionReference();
+      var idlayer = charIDToTypeID( "Lyr " );
+      ref1.putEnumerated( idlayer, charIDToTypeID( "Ordn" ), charIDToTypeID( "Trgt" ) );
+      desc100.putReference( idnull, ref1 );
+      var idT = charIDToTypeID( "T   " );
+      var desc101 = new ActionDescriptor();
+      var idOfst = charIDToTypeID( "Ofst" );
+      var desc102 = new ActionDescriptor();
+      desc102.putUnitDouble( charIDToTypeID( "Hrzn" ), charIDToTypeID( "#Pxl" ), 0 );
+      desc102.putUnitDouble( charIDToTypeID( "Vrtc" ), charIDToTypeID( "#Pxl" ), 0 );
+      var idPnt = charIDToTypeID( "Pnt " );
+      desc101.putObject( idOfst, idPnt, desc102 );
+      var idOfst = charIDToTypeID( "Ofst" );
+      desc100.putObject( idT, idOfst, desc101 );
+      executeAction( idsetd, desc100, DialogModes.NO );
+
+      // Get the current bounds of the text layer
+      var bounds = textLayer.bounds;
+      var currentWidth = bounds[2].as("px") - bounds[0].as("px");
+      var currentHeight = bounds[3].as("px") - bounds[1].as("px");
+
+      // Define the new pixel dimensions
+      var newWidth = 500; // new width in pixels
+      var newHeight = 300; // new height in pixels
+
+      // Calculate the scale percentages
+      var widthScale = (newWidth / currentWidth) * 100;
+      var heightScale = (newHeight / currentHeight) * 100;
+
+      // Transform the text layer: scale and rotate
+      var idTrnf = charIDToTypeID( "Trnf" );
+      var descTransform = new ActionDescriptor();
+      descTransform.putEnumerated( charIDToTypeID( "FTcs" ), charIDToTypeID( "QCSt" ), charIDToTypeID( "Qcsa" ) );
+      descTransform.putUnitDouble( charIDToTypeID( "Wdth" ), charIDToTypeID( "#Prc" ), widthScale ); // scale width
+      descTransform.putUnitDouble( charIDToTypeID( "Hght" ), charIDToTypeID( "#Prc" ), heightScale ); // scale height
+      //descTransform.putUnitDouble( charIDToTypeID( "Angl" ), charIDToTypeID( "#Ang" ), 45.000000 ); // rotate 45 degrees
+
+      executeAction( idTrnf, descTransform, DialogModes.NO );
+  } else {
+      alert("The selected layer is not a text layer.");
+  }
+
+  }
+
 
   function set_background_image(doc, documentDetails, combination){
     var find_bg = findLayer(doc, "Background")
@@ -244,6 +297,14 @@ function selectAllLayers(){
       }else{
          return alert("Invaild layer Structure")
       }
+  }
+
+  function set_name(doc, documentDetails, combination){
+    var Bottle = findLayer(doc, "Bottle")
+    executeAction(stringIDToTypeID("placedLayerEditContents"));
+    var BottleDoc = app.activeDocument;
+    BottleDoc.activeLayer = BottleDoc.layers[0]
+    transformText(BottleDoc)
   }
 
 function main() {
@@ -300,9 +361,10 @@ function main() {
 
   var comb1 = combination[5]
 
-  set_background_image(doc, documentDetails, comb1)
 
-  
+  //set_background_image(doc, documentDetails, comb1)
+
+  set_name(doc, documentDetails, comb1)
 
   
 
