@@ -235,12 +235,15 @@ function duplicateLayer(
   app.open(new File(rootPath + "/" + folder_name + "/" + file_name));
   var current_doc = app.activeDocument;
   executeAction(stringIDToTypeID("newPlacedLayer"));
-  current_doc.resizeImage(
-    resizeArray[0],
-    UnitValue(resizeArray[1], "px"),
-    resizeArray[2],
-    ResampleMethod.BICUBIC
-  );
+  if(resizeArray){
+
+    current_doc.resizeImage(
+      resizeArray[0],
+      UnitValue(resizeArray[1], "px"),
+      resizeArray[2],
+      ResampleMethod.BICUBIC
+    );
+  }
   current_doc.activeLayer.duplicate(
     targetDoc,
     ElementPlacement[ELEMENT_PLACEMENT.PLACEATBEGINNING]
@@ -291,6 +294,25 @@ function scaleToFit(activeDoc, canvas) {
   ); //For Height
 }
 
+function scaleToFill(activeDoc, canvas) {
+  // get the scale
+  var docWidth = activeDoc.width.value;
+  var docHeight = activeDoc.height.value;
+  var scale = Math.max(canvas[0] / docWidth, canvas[1] / docHeight);
+  activeDoc.resizeImage(
+    UnitValue(docWidth * scale, "px"),
+    null,
+    null,
+    ResampleMethod.BICUBIC
+  ); //For Width
+  activeDoc.resizeImage(
+    null,
+    UnitValue(docHeight * scale, "px"),
+    null,
+    ResampleMethod.BICUBIC
+  ); //For Height
+}
+
 function RevealAll(activeLayer, targetDoc) {
   var lyrWidth = activeLayer.bounds[2] - activeLayer.bounds[0];
   var lyrHeight = activeLayer.bounds[3] - activeLayer.bounds[1];
@@ -306,6 +328,15 @@ function RevealAll(activeLayer, targetDoc) {
     AnchorPosition.MIDDLELEFT
   ); //For Height
 }
+
+function saveJPGFile(filePath, Quality) {
+  var jpegOptions = new JPEGSaveOptions();
+  jpegOptions.quality = Quality;
+  jpegOptions.embedColorProfile = true;
+  jpegOptions.matte = MatteType.NONE;
+  app.activeDocument.saveAs(new File(filePath), jpegOptions, true);
+}
+
 
 function set_background_image(doc, documentDetails, combination) {
   var find_bg = findLayer(doc, "Background");
@@ -335,7 +366,7 @@ function set_background_image(doc, documentDetails, combination) {
   }
 }
 
-function set_name(doc, documentDetails, combination) {
+function set_name(doc, combination) {
   findLayer(doc, "Bottle");
   
   executeAction(stringIDToTypeID("placedLayerEditContents"));
@@ -369,6 +400,37 @@ function set_name(doc, documentDetails, combination) {
   }
 }
 
+function set_design_image(doc, combination, documentDetails){
+  findLayer(doc, "Bottle");
+  
+  executeAction(stringIDToTypeID("placedLayerEditContents"));
+  var BottleDoc = app.activeDocument;
+  const findText = findLayer(BottleDoc, "Bottom_Image");
+  executeAction(stringIDToTypeID("placedLayerEditContents"));
+  var Bottom_Image = app.activeDocument;
+  duplicateLayer(IMAGES_FOLDER, combination.image, null, Bottom_Image, 
+    documentDetails
+  )
+  app.activeDocument = Bottom_Image;
+  RevealAll(Bottom_Image.activeLayer, Bottom_Image)
+
+  Bottom_Image.selection.selectAll();
+  align("AdCH");
+  align("AdCV");
+
+  scaleToFill(Bottom_Image, IMAGE_CANVAS)
+
+  Bottom_Image.close(SaveOptions.SAVECHANGES);
+      app.activeDocument = BottleDoc
+
+      BottleDoc.selection.selectAll();
+      align("AdCH");
+      
+
+      BottleDoc.close(SaveOptions.SAVECHANGES);
+
+}
+
 function main() {
   if (app.documents.length === 0) return;
   var doc = app.activeDocument;
@@ -380,26 +442,26 @@ function main() {
   /******************************************/
 
   //Color
-  // var COLOR = prompt("Enter color hexcode value e.g '#ffff00'", "");
-  // if (!COLOR || COLOR.indexOf("#") === -1 || COLOR.length !== 7)
-  //   return alert("Invaild Hex Code");
-  // var rgbColor = hexToRgb(COLOR);
+  var COLOR = prompt("Enter color hexcode value e.g '#ffff00'", "");
+  if (!COLOR || COLOR.indexOf("#") === -1 || COLOR.length !== 7)
+    return alert("Invaild Hex Code");
+  var rgbColor = hexToRgb(COLOR);
 
-  //Set Solid Color 1
-  //setSolidColor(doc, rgbColor, "Handle Color");
+  // Set Solid Color 1
+  setSolidColor(doc, rgbColor, "Handle Color");
 
-  //Set Solid Color 2
-  //setSolidColor(doc, rgbColor, "Lead Color");
+  // Set Solid Color 2
+  setSolidColor(doc, rgbColor, "Lead Color");
 
-  //Set Solid Color 3
-  // var Bottle = findLayer(doc, "Bottle")
-  // if(!Bottle) return alert("Bottle Layer is missing")
-  // executeAction(stringIDToTypeID("placedLayerEditContents"));
-  // var BottleDoc = app.activeDocument;
-  // var BottleColor = findLayer(BottleDoc, "Bottle Color")
-  // if(!BottleColor) return alert("BottleColor Layer is missing")
-  // setSolidColor(BottleDoc, rgbColor, "Bottle Color");
-  // BottleDoc.close(SaveOptions.SAVECHANGES);
+  // Set Solid Color 3
+  var Bottle = findLayer(doc, "Bottle")
+  if(!Bottle) return alert("Bottle Layer is missing")
+  executeAction(stringIDToTypeID("placedLayerEditContents"));
+  var BottleDoc = app.activeDocument;
+  var BottleColor = findLayer(BottleDoc, "Bottle Color")
+  if(!BottleColor) return alert("BottleColor Layer is missing")
+  setSolidColor(BottleDoc, rgbColor, "Bottle Color");
+  BottleDoc.close(SaveOptions.SAVECHANGES);
 
   /******************************************/
   /************ IMAGES SETUP ****************/
@@ -430,9 +492,14 @@ function main() {
 
   var comb1 = combination[5];
 
-  //set_background_image(doc, documentDetails, comb1)
+  set_background_image(doc, documentDetails, comb1)
 
-  set_name(doc, documentDetails, comb1);
+  set_name(doc, comb1);
+
+  set_design_image(doc, comb1, documentDetails)
+
+  saveJPGFile(rootPath + "/Output/JPG/" + "comb1.jpg", 12)
+
 }
 
 main();
