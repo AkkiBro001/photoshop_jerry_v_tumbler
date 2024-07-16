@@ -1,11 +1,18 @@
 //FONT NANE
-var FONT_NAME = ["Arial", "Times New Roman", "Impact"];
+var FONT_NAME = ["Arial", "Times New Roman", "Impact"]; //Here you can set the font
 
 //NAMES
-var NAMES = ["Amelia", "Isabella", "Sophia"];
+var NAMES = ["Amelia", "Isabella", "Sophia"]; //Here you can add the name
 
-//Save PSD File
+//Save PSD File (Here you can change the value of SAVE_PSD : true / false)
 var SAVE_PSD = false //if true it will save psd file along with jpg, if false save only jpg
+
+/********************************************************************************************/
+/********************************************************************************************/
+/***************** DON'T DO ANY MODIFICATION OR EDIT BELOW CODE *****************************/
+/********************************************************************************************/
+/********************************************************************************************/
+
 
 //Folder Name
 var BACKGROUND_IMAGE_FOLDER = "Background Images";
