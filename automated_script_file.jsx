@@ -4,6 +4,9 @@ var FONT_NAME = ["Arial", "Times New Roman", "Impact"];
 //NAMES
 var NAMES = ["Amelia", "Isabella", "Sophia"];
 
+//Save PSD File
+var SAVE_PSD = false //if true it will save psd file along with jpg, if false save only jpg
+
 //Folder Name
 var BACKGROUND_IMAGE_FOLDER = "Background Images";
 var IMAGES_FOLDER = "Images";
@@ -345,6 +348,15 @@ function revert() {
 
 }
 
+function SavePSD(saveFile)
+{
+  var psdFile = new File(saveFile);
+  psdSaveOptions = new PhotoshopSaveOptions();
+  psdSaveOptions.embedColorProfile = true;
+  psdSaveOptions.alphaChannels = true;  
+  activeDocument.saveAs(psdFile, psdSaveOptions, false, Extension.LOWERCASE);
+}
+
 function set_background_image(doc, documentDetails, combination) {
   var find_bg = findLayer(doc, "Background");
   if (!find_bg) return alert("Background layerset is missing");
@@ -445,12 +457,8 @@ function set_design_image(doc, combination, documentDetails) {
   BottleDoc.close(SaveOptions.SAVECHANGES);
 }
 
-function set_soild_color(doc) {
-  //Color
-  var COLOR = prompt("Enter color hexcode value e.g '#ffff00'", "");
-  if (!COLOR || COLOR.indexOf("#") === -1 || COLOR.length !== 7)
-    return alert("Invaild Hex Code");
-  var rgbColor = hexToRgb(COLOR);
+function set_soild_color(doc, rgbColor) {
+  
 
   // Set Solid Color 1
   setSolidColor(doc, rgbColor, "Handle Color");
@@ -477,7 +485,10 @@ function main() {
 
   
   /************ COLOR SETUP ******************/
-  set_soild_color(doc)
+  var COLOR = prompt("Enter color hexcode value e.g '#ffff00'", "");
+  if (!COLOR || COLOR.indexOf("#") === -1 || COLOR.length !== 7)
+    return alert("Invaild Hex Code");
+  var rgbColor = hexToRgb(COLOR);
 
   /************ COMBINATION SETUP ******************/
   var background_images = getFileNamesInFolder(
@@ -507,27 +518,28 @@ function main() {
 
   /************ ITERATION ****************/
   for(var c = 0; c < combination.length; c++){
+    set_soild_color(doc, rgbColor)
+
     set_background_image(doc, documentDetails, combination[c]);
 
     set_name(doc, combination[c]);
   
     set_design_image(doc, combination[c], documentDetails);
-  
+
     saveJPGFile(rootPath + "/Output/JPG/" + "combination_" + (c+1), 12);
+
+    if(SAVE_PSD){
+      doc.duplicate()
+      var doc2 = app.activeDocument;
+      SavePSD(rootPath + "/Output/PSD/" + "combination_" + (c+1) + ".psd")
+      doc2.close()
+    }
   
     revert()
   }
-  
+  doc.close(SaveOptions.DONOTSAVECHANGES);
   alert("Combination of " + cominationLength + " done" )
-  // for(var c = 0; c < combination.length; c++){
-  //   if(combination[c].image.indexOf("AdobeStock_362815065_Preview") > -1){
-
-  //     alert(c)
-  //     break;
-  //   }
-  // }
-
-  /************ BACKGROUND SETUP ****************/
+  
   
 }
 
